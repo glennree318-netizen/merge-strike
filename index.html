@@ -998,7 +998,7 @@
   const FRAME_MS = 1000/60; // ~16.67ms per frame at 60fps
   const state = { running: false, paused: false, over: false, wave: 1, waveTimer: 0, spawnTimer: 0, enemiesInWave: 0, enemiesSpawned: 0, kills: 0, gold: 0, timeMs: 0, shakeTimeMs: 0, pendingUpgrade: false, pendingLevels: 0, waveAnnounceTimerMs: 0, bossActive: false, bossesKilled: 0 };
   // Speeds in px/ms (original px/frame / FRAME_MS). Cooldowns/timers in ms.
-  const player = { x: W/2, y: H/2, w: 28, h: 28, speed: 3, hp: 100, maxHp: 100, level: 1, xp: 0, xpToNext: 10, dmg: 10, fireRate: 20, fireCd: 0, projCount: 1, projSpeed: 8, projSize: 4, pierce: 0, crit: 0.05, xpMult: 1, goldMult: 1, invuln: 0, lifesteal: 0, thorns: 0, dodge: 0, magnetRange: 120, regen: 0, regenCd: 0, explosive: 0, freezeChance: 0, shield: 0, maxShield: 0 };
+  const player = { x: W/2, y: H/2, w: 28, h: 28, speed: 3, hp: 100, maxHp: 100, level: 1, xp: 0, xpToNext: 10, dmg: 10, fireRate: 20, fireCd: 0, projCount: 1, projSpeed: 8, projSize: 4, pierce: 0, crit: 0.05, xpMult: 1, goldMult: 1, invuln: 0, lifesteal: 0, thorns: 0, dodge: 0, magnetRange: 120, regen: 0, regenCd: 0, explosive: 0, freezeChance: 0, shield: 0, maxShield: 0, berserker: false, frostNova: false, meteor: false, frostNovaCd: 0, meteorCd: 0, chainBonus: 0 };
 
   const bullets = [], enemyBullets = [], enemies = [], particles = [], xpOrbs = [], towerBullets = [], floatingTexts = [];
   const stars = [];
@@ -1084,6 +1084,10 @@
       case 'sniper': base.w = 22; base.h = 22; base.hp = (12 + waveBonus * 3) * diff.enemyHp; base.speed = 0.6; base.color = '#ff8844'; base.xp = 6; base.gold = 9; base.fireCd = 120; base.preferredRange = 300; break;
       case 'ninja': base.w = 20; base.h = 20; base.hp = (14 + waveBonus * 3) * diff.enemyHp; base.speed = 1.8; base.color = '#2a2a4a'; base.xp = 6; base.gold = 8; base.dashCd = 90; base.dashSpeed = 8; break;
       case 'necromancer': base.w = 28; base.h = 28; base.hp = (22 + waveBonus * 5) * diff.enemyHp; base.speed = 0.7; base.color = '#8a4aff'; base.xp = 10; base.gold = 15; base.summonCd = 180; break;
+      case 'charger': base.w = 24; base.h = 24; base.hp = (16 + waveBonus * 4) * diff.enemyHp; base.speed = 1.0; base.color = '#ff8844'; base.xp = 6; base.gold = 8; base.chargeCd = 90; base.chargeSpeed = 7; break;
+      case 'phantom': base.w = 20; base.h = 20; base.hp = (8 + waveBonus * 2) * diff.enemyHp; base.speed = 1.6; base.color = '#cc88ff'; base.xp = 5; base.gold = 6; base.teleCd = 60; base.alpha = 0.6; break;
+      case 'vampire': base.w = 24; base.h = 24; base.hp = (20 + waveBonus * 5) * diff.enemyHp; base.speed = 1.1; base.color = '#ff4466'; base.xp = 8; base.gold = 10; base.lifesteal = 0.3; break;
+      case 'brute': base.w = 44; base.h = 44; base.hp = (60 + waveBonus * 15) * diff.enemyHp; base.speed = 0.5; base.color = '#886644'; base.dmg = 25 * diff.enemyDmg; base.xp = 12; base.gold = 18; break;
       case 'boss': base.w = 70; base.h = 70; base.hp = (200 + waveBonus * 80) * diff.enemyHp; base.speed = 0.6; base.color = '#ff4aa0'; base.dmg = 30 * diff.enemyDmg; base.xp = 50; base.gold = 100; base.fireCd = 60; break;
       case 'boss_juggernaut': base.w = 90; base.h = 90; base.hp = (400 + waveBonus * 150) * diff.enemyHp; base.speed = 0.4; base.color = '#ff2a2a'; base.dmg = 50 * diff.enemyDmg; base.xp = 80; base.gold = 150; base.fireCd = 90; base.chargeCd = 200; break;
       case 'boss_swarm': base.w = 60; base.h = 60; base.hp = (250 + waveBonus * 100) * diff.enemyHp; base.speed = 0.8; base.color = '#88ff44'; base.dmg = 20 * diff.enemyDmg; base.xp = 60; base.gold = 120; base.fireCd = 80; base.spawnCd = 120; break;
@@ -1131,11 +1135,11 @@
     { id: 'titan', icon: '🛡', name: 'Titan', desc: '+40 max HP', rarity: 'rare', apply: () => { player.maxHp += 40; player.hp = Math.min(player.maxHp, player.hp + 40); }},
     { id: 'explosive', icon: '💣', name: 'Explosive Shots', desc: '+20% explosive chance', rarity: 'epic', apply: () => { player.explosive = Math.min(1, player.explosive + 0.2); }},
     { id: 'frosttouch', icon: '❄', name: 'Frost Touch', desc: '+15% freeze chance', rarity: 'epic', apply: () => { player.freezeChance = Math.min(0.8, player.freezeChance + 0.15); }},
-    { id: 'berserker', icon: '🪓', name: 'Berserker', desc: '+30% dmg (low HP bonus)', rarity: 'epic', apply: () => { player.dmg *= 1.3; }},
+    { id: 'berserker', icon: '🪓', name: 'Berserker', desc: '+15% dmg, x1.5 below 50% HP', rarity: 'epic', apply: () => { player.berserker = true; player.dmg *= 1.15; }},
     { id: 'energyshield', icon: '🔰', name: 'Energy Shield', desc: '+25 max shield', rarity: 'epic', apply: () => { player.maxShield += 25; player.shield = Math.min(player.maxShield, player.shield + 25); }},
     { id: 'chain', icon: '⚡', name: 'Chain Lightning', desc: 'Bullets chain +1', rarity: 'legendary', apply: () => { player.chainBonus = (player.chainBonus || 0) + 1; }},
-    { id: 'frostnova', icon: '🌨', name: 'Frost Nova', desc: 'Freeze nearby on hit', rarity: 'legendary', apply: () => { player.freezeChance = Math.min(0.9, player.freezeChance + 0.25); player.magnetRange *= 1.1; }},
-    { id: 'meteor', icon: '☄', name: 'Meteor Strike', desc: '+50% dmg', rarity: 'legendary', apply: () => { player.dmg *= 1.5; }},
+    { id: 'frostnova', icon: '🌨', name: 'Frost Nova', desc: 'Periodic freeze aura', rarity: 'legendary', apply: () => { player.frostNova = true; player.freezeChance = Math.min(0.9, player.freezeChance + 0.15); }},
+    { id: 'meteor', icon: '☄', name: 'Meteor Strike', desc: 'Periodic meteor', rarity: 'legendary', apply: () => { player.meteor = true; player.dmg *= 1.25; }},
   ];
 
   function showUpgradeChoices() {
@@ -1243,7 +1247,8 @@
     for (let i = 0; i < count; i++) {
       const offset = count === 1 ? 0 : (i - (count-1)/2) * 0.15;
       const ang = baseAng + offset; const isCrit = Math.random() < player.crit;
-      bullets.push({ x: player.x, y: player.y, vx: Math.cos(ang) * player.projSpeed, vy: Math.sin(ang) * player.projSpeed, w: player.projSize, h: player.projSize, dmg: player.dmg * (isCrit ? 3 : 1), pierce: player.pierce, hit: new Set(), color: isCrit ? '#ffdd4a' : '#4af0ff', life: 80, crit: isCrit, explosive: Math.random() < player.explosive, freeze: Math.random() < player.freezeChance, chain: player.chainBonus || 0 });
+      const berserkMult = (player.berserker && player.hp < player.maxHp * 0.5) ? 1.5 : 1;
+      bullets.push({ x: player.x, y: player.y, vx: Math.cos(ang) * player.projSpeed, vy: Math.sin(ang) * player.projSpeed, w: player.projSize, h: player.projSize, dmg: player.dmg * berserkMult * (isCrit ? 3 : 1), pierce: player.pierce, hit: new Set(), color: isCrit ? '#ffdd4a' : '#4af0ff', life: 80, crit: isCrit, explosive: Math.random() < player.explosive, freeze: Math.random() < player.freezeChance, chain: player.chainBonus || 0 });
     }
     SFX.shoot();
   }
@@ -1313,6 +1318,32 @@
 
     playerShoot();
 
+    // Frost Nova: periodic freeze of nearby enemies
+    if (player.frostNova) {
+      if (player.frostNovaCd <= 0) {
+        player.frostNovaCd = 300;
+        for (const e of enemies) {
+          if (dist(player, e) < 200) { e.freezeTimer = 120; spawnParticles(e.x, e.y, '#88ddff', 10, 4); }
+        }
+        spawnParticles(player.x, player.y, '#88ddff', 25, 6);
+        SFX.teleport();
+      } else player.frostNovaCd--;
+    }
+    // Meteor Strike: periodic heavy hit on a random enemy
+    if (player.meteor) {
+      if (player.meteorCd <= 0) {
+        player.meteorCd = 360;
+        if (enemies.length > 0) {
+          const target = enemies[Math.floor(Math.random() * enemies.length)];
+          damageEnemy(target, player.dmg * 5);
+          spawnParticles(target.x, target.y, '#ff8a4a', 30, 8);
+          spawnFloatingText(target.x, target.y, 'METEOR!', '#ff8a4a');
+          SFX.explode();
+          if (settings.shakeOn) state.shakeTime = 8;
+        }
+      } else player.meteorCd--;
+    }
+
     state.waveTimer++; state.spawnTimer--;
     if (state.spawnTimer <= 0 && state.enemiesSpawned < state.enemiesInWave) {
       const isBossWave = state.wave % 5 === 0;
@@ -1324,7 +1355,7 @@
         else if (w >= 4 && roll < 0.47) type = 'shooter'; else if (w >= 4 && roll < 0.53) type = 'bomber';
         else if (w >= 5 && roll < 0.59) type = 'teleporter'; else if (w >= 5 && roll < 0.65) type = 'healer';
         else if (w >= 6 && roll < 0.71) type = 'shielded'; else if (w >= 7 && roll < 0.76) type = 'sniper';
-        else if (w >= 7 && roll < 0.81) type = 'ninja'; else if (w >= 8 && roll < 0.86) type = 'necromancer';
+        else if (w >= 7 && roll < 0.81) type = 'ninja'; else if (w >= 8 && roll < 0.86) type = 'necromancer'; else if (w >= 4 && roll < 0.90) type = 'charger'; else if (w >= 5 && roll < 0.93) type = 'phantom'; else if (w >= 6 && roll < 0.96) type = 'vampire'; else if (w >= 7 && roll < 0.98) type = 'brute';
         if (type === 'swarm') { for (let i = 0; i < 4; i++) spawnEnemy('swarm'); state.enemiesSpawned += 3; }
         else spawnEnemy(type);
       }
@@ -1380,6 +1411,10 @@
         if (e.dashCd === undefined) e.dashCd = 90; e.dashCd--;
         if (e.dashCd <= 0) { e.x += Math.cos(ang) * e.dashSpeed * 10; e.y += Math.sin(ang) * e.dashSpeed * 10; e.x = Math.max(0, Math.min(W, e.x)); e.y = Math.max(0, Math.min(H, e.y)); SFX.dash(); spawnParticles(e.x, e.y, e.color, 8, 3); e.dashCd = 90; }
         else { e.x += Math.cos(ang) * e.speed * speedMult; e.y += Math.sin(ang) * e.speed * speedMult; }
+      } else if (e.type === 'charger') {
+        if (e.chargeCd === undefined) e.chargeCd = 90; e.chargeCd--;
+        if (e.chargeCd <= 0) { e.x += Math.cos(ang) * e.chargeSpeed * 12; e.y += Math.sin(ang) * e.chargeSpeed * 12; e.x = Math.max(0, Math.min(W, e.x)); e.y = Math.max(0, Math.min(H, e.y)); SFX.dash(); spawnParticles(e.x, e.y, e.color, 10, 4); e.chargeCd = 90; }
+        else { e.x += Math.cos(ang) * e.speed * speedMult; e.y += Math.sin(ang) * e.speed * speedMult; }
       } else if (e.type === 'boss_juggernaut') {
         if (e.chargeCd === undefined) e.chargeCd = 200; e.chargeCd--;
         if (e.chargeCd <= 0) { e.x += Math.cos(ang) * 6 * 15; e.y += Math.sin(ang) * 6 * 15; e.x = Math.max(0, Math.min(W, e.x)); e.y = Math.max(0, Math.min(H, e.y)); if (settings.shakeOn) state.shakeTime = 15; SFX.bossRoar(); e.chargeCd = 200; }
@@ -1387,7 +1422,7 @@
       } else { e.x += Math.cos(ang) * e.speed * speedMult; e.y += Math.sin(ang) * e.speed * speedMult; }
 
       if (e.type === 'healer') { if (e.healCd === undefined) e.healCd = 60; e.healCd--; if (e.healCd <= 0) { for (const other of enemies) { if (other !== e && dist(e, other) < e.healRange && other.hp < other.maxHp) { other.hp = Math.min(other.maxHp, other.hp + e.healAmount); if (q !== 'low') spawnParticles(other.x, other.y, '#ff88dd', 3, 1); } } SFX.heal(); e.healCd = 60; } }
-      else if (e.type === 'teleporter') { if (e.teleCd === undefined) e.teleCd = 120; e.teleCd--; if (e.teleCd <= 0) { spawnParticles(e.x, e.y, e.color, 10, 3); e.x = rand(50, W-50); e.y = rand(50, H-50); spawnParticles(e.x, e.y, e.color, 10, 3); SFX.teleport(); e.teleCd = 120; } }
+      else if (e.type === 'teleporter' || e.type === 'phantom') { if (e.teleCd === undefined) e.teleCd = (e.type === 'phantom' ? 60 : 120); e.teleCd--; if (e.teleCd <= 0) { spawnParticles(e.x, e.y, e.color, 10, 3); e.x = rand(50, W-50); e.y = rand(50, H-50); spawnParticles(e.x, e.y, e.color, 10, 3); SFX.teleport(); e.teleCd = (e.type === 'phantom' ? 60 : 120); } }
       else if (e.type === 'necromancer') { if (e.summonCd === undefined) e.summonCd = 180; e.summonCd--; if (e.summonCd <= 0 && enemies.length < 100) { for (let k = 0; k < 2; k++) enemies.push({ x: e.x + rand(-20, 20), y: e.y + rand(-20, 20), w: 16, h: 16, hp: 8, maxHp: 8, speed: 1.5, type: 'grunt', dmg: 5 * DIFF[settings.difficulty].enemyDmg, color: '#8a4aff', xp: 1, gold: 1, slowTimer: 0, slowFactor: 1, freezeTimer: 0, t: 0 }); SFX.summon(); spawnParticles(e.x, e.y, '#8a4aff', 10, 3); e.summonCd = 180; } }
       else if (e.type === 'boss_swarm') { if (e.spawnCd === undefined) e.spawnCd = 120; e.spawnCd--; if (e.spawnCd <= 0 && enemies.length < 100) { for (let k = 0; k < 3; k++) { spawnEnemy('swarm'); const last = enemies[enemies.length - 1]; last.x = e.x + rand(-30, 30); last.y = e.y + rand(-30, 30); } SFX.summon(); e.spawnCd = 120; } }
 
@@ -1405,7 +1440,7 @@
 
       if (player.invuln <= 0 && rectCollide(e, player)) {
         if (Math.random() < player.dodge) spawnFloatingText(player.x, player.y - 20, 'DODGE!', '#4af0ff');
-        else { applyDamageToPlayer(e.dmg); if (player.thorns > 0) e.hp -= player.thorns; }
+        else { applyDamageToPlayer(e.dmg); if (player.thorns > 0) e.hp -= player.thorns; if (e.lifesteal) e.hp = Math.min(e.maxHp, e.hp + e.dmg * e.lifesteal); }
       }
       if (e.hp <= 0) killEnemy(e, i);
     }
@@ -1652,6 +1687,10 @@
       else if (e.type === 'sniper') { const ang = Math.atan2(player.y - e.y, player.x - e.x); ctx.rotate(ang); ctx.fillRect(-e.w/2, -e.h/4, e.w, e.h/2); ctx.fillRect(e.w/2, -2, 8, 4); }
       else if (e.type === 'necromancer') { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + state.time * 0.03; const r = i % 2 === 0 ? e.w/2 : e.w/3; ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r); } ctx.closePath(); ctx.fill(); }
       else if (e.type === 'splitter') { ctx.beginPath(); for (let i = 0; i < 5; i++) { const a = i * Math.PI * 2 / 5 - Math.PI/2; const r = i % 2 === 0 ? e.w/2 : e.w/4; ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r); } ctx.closePath(); ctx.fill(); }
+      else if (e.type === 'charger') { ctx.beginPath(); ctx.moveTo(e.w/2, 0); ctx.lineTo(-e.w/2, -e.h/2); ctx.lineTo(-e.w/2, e.h/2); ctx.closePath(); ctx.fill(); }
+      else if (e.type === 'phantom') { ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(0, 0, e.w/2, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1; }
+      else if (e.type === 'vampire') { ctx.beginPath(); ctx.arc(0, 0, e.w/2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI*2); ctx.fill(); }
+      else if (e.type === 'brute') { ctx.fillRect(-e.w/2, -e.h/2, e.w, e.h); }
       else { ctx.beginPath(); ctx.arc(0, 0, e.w/2, 0, Math.PI*2); ctx.fill(); }
       if (useGlow) ctx.shadowBlur = 0;
       // enemy HP meter removed
@@ -1679,6 +1718,26 @@
       ctx.globalAlpha = 1;
     }
     if (state.bossActive && q !== 'low') { ctx.strokeStyle = `rgba(255, 74, 160, ${0.3 + 0.2 * Math.sin(state.time * 0.1)})`; ctx.lineWidth = 3; ctx.strokeRect(0, 0, W, H); }
+    if (state.bossActive) {
+      const boss = enemies.find(e => e.type === 'boss' || e.type === 'boss_juggernaut' || e.type === 'boss_swarm');
+      if (boss) {
+        const barW = W * 0.6, barH = 14;
+        const bx = (W - barW) / 2, by = 18;
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(bx - 2, by - 2, barW + 4, barH + 4);
+        ctx.fillStyle = 'rgba(255, 74, 160, 0.25)';
+        ctx.fillRect(bx, by, barW, barH);
+        ctx.fillStyle = '#ff4aa0';
+        ctx.fillRect(bx, by, barW * Math.max(0, boss.hp / boss.maxHp), barH);
+        ctx.strokeStyle = '#ff4aa0';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(bx, by, barW, barH);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(`BOSS  ${Math.ceil(boss.hp)}/${boss.maxHp}`, W / 2, by - 6);
+      }
+    }
     ctx.restore();
   }
 
@@ -1712,6 +1771,7 @@ const permHp = getPermBonus('hp').startHp || 0; const permGold = getPermBonus('g
     player.magnetRange = 120 * permMagnet; player.regen = permRegen; player.regenCd = 0;
     player.explosive = 0; player.freezeChance = 0;
     player.shield = permShield; player.maxShield = permShield; player.chainBonus = 0;
+    player.berserker = false; player.frostNova = false; player.meteor = false; player.frostNovaCd = 0; player.meteorCd = 0;
 
     bullets.length = 0; enemyBullets.length = 0; enemies.length = 0; particles.length = 0;
     xpOrbs.length = 0; towers.length = 0; towerBullets.length = 0; floatingTexts.length = 0;
