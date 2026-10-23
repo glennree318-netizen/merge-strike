@@ -1646,7 +1646,7 @@
       else if (e.type === 'fast' || e.type === 'teleporter' || e.type === 'ninja') {
         const ang = Math.atan2(player.y - e.y, player.x - e.x); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(e.w/2, 0); ctx.lineTo(-e.w/2, -e.h/2); ctx.lineTo(-e.w/2, e.h/2); ctx.closePath(); ctx.fill();
       } else if (e.type === 'healer') { ctx.beginPath(); ctx.arc(0, 0, e.w/2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(-2, -e.w/3, 4, e.w*2/3); ctx.fillRect(-e.w/3, -2, e.w*2/3, 4); }
-      else if (e.type === 'shielded') { ctx.beginPath(); ctx.arc(0, 0, e.w/2, 0, Math.PI*2); ctx.fill(); if (e.shield > 0) { ctx.strokeStyle = '#ffdd4a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, e.w/2 + 4, 0, Math.PI*2 * (e.shield / e.maxShield)); ctx.stroke(); } }
+      else if (e.type === 'shielded') { ctx.beginPath(); ctx.arc(0, 0, e.w/2, 0, Math.PI*2); ctx.fill(); }
       else if (e.type === 'bomber') { ctx.beginPath(); ctx.arc(0, 0, e.w/2, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ffdd4a'; ctx.beginPath(); ctx.arc(0, -e.h/2 - 3, 3, 0, Math.PI*2); ctx.fill(); }
       else if (e.type === 'swarm') ctx.fillRect(-e.w/2, -e.h/2, e.w, e.h);
       else if (e.type === 'sniper') { const ang = Math.atan2(player.y - e.y, player.x - e.x); ctx.rotate(ang); ctx.fillRect(-e.w/2, -e.h/4, e.w, e.h/2); ctx.fillRect(e.w/2, -2, 8, 4); }
@@ -1654,7 +1654,7 @@
       else if (e.type === 'splitter') { ctx.beginPath(); for (let i = 0; i < 5; i++) { const a = i * Math.PI * 2 / 5 - Math.PI/2; const r = i % 2 === 0 ? e.w/2 : e.w/4; ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r); } ctx.closePath(); ctx.fill(); }
       else { ctx.beginPath(); ctx.arc(0, 0, e.w/2, 0, Math.PI*2); ctx.fill(); }
       if (useGlow) ctx.shadowBlur = 0;
-      if (e.hp < e.maxHp) { ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(-e.w/2, -e.h/2 - 8, e.w, 4); ctx.fillStyle = isBoss ? '#ffd84a' : '#ff4a6a'; ctx.fillRect(-e.w/2, -e.h/2 - 8, e.w * (e.hp/e.maxHp), 4); }
+      // enemy HP meter removed
       if (e.slowTimer > 0 && q !== 'low') { ctx.strokeStyle = '#88ddff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, e.w/2 + 3, 0, Math.PI*2); ctx.stroke(); }
       ctx.restore();
     }
