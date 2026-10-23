@@ -293,7 +293,7 @@
       <div class="settings-row"><label>🎵 Music Volume</label><input type="range" id="musicVol" min="0" max="100" value="70" /></div>
       <div class="settings-row"><label>💥 SFX Volume</label><input type="range" id="sfxVol" min="0" max="100" value="100" /></div>
       <!-- volume boost removed -->
-      <div class="settings-row"><label>🎼 Music</label><div class="toggle on" id="musicToggle"></div></div>
+      <!-- music toggle removed -->
       <div class="settings-row"><label>🎯 Difficulty</label><select id="difficultySelect"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option><option value="nightmare">Nightmare</option></select></div>
       <div class="settings-row"><label>✨ Quality</label><select id="qualitySelect"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
       <!-- screen shake removed -->
@@ -644,10 +644,10 @@
   const defaultSettings = { masterVol: 100, musicVol: 70, sfxVol: 100, volumeBoost: 100, musicOn: true, difficulty: 'normal', quality: 'medium', shakeOn: false, showFps: false, autoPerf: true, hapticOn: true };
   let settings = { ...defaultSettings };
   try { const s = localStorage.getItem('mergeStrikeSettings'); if (s) settings = { ...defaultSettings, ...JSON.parse(s) }; } catch(e) {}
-  settings.shakeOn = false; settings.volumeBoost = 100; saveSettings();
+  settings.shakeOn = false; settings.volumeBoost = 100; settings.musicOn = true; saveSettings();
   function saveSettings() { try { localStorage.setItem('mergeStrikeSettings', JSON.stringify(settings)); } catch(e) {} }
   $('masterVol').value = settings.masterVol; $('musicVol').value = settings.musicVol; $('sfxVol').value = settings.sfxVol;
-  $('musicToggle').classList.toggle('on', settings.musicOn);
+  // music toggle removed
   $('difficultySelect').value = settings.difficulty; $('qualitySelect').value = settings.quality;
   // screen shake removed
   // volume boost removed
@@ -1874,14 +1874,7 @@ if (wasRecord && state.wave > 1) { newRecordBanner.classList.add('show'); SFX.ne
   $('musicVol').oninput = e => { settings.musicVol = +e.target.value; saveSettings(); updateVolumes(); };
   $('sfxVol').oninput = e => { settings.sfxVol = +e.target.value; saveSettings(); updateVolumes(); };
   // volume boost removed
-  $('musicToggle').onclick = e => {
-    settings.musicOn = !settings.musicOn;
-    e.currentTarget.classList.toggle('on', settings.musicOn);
-    saveSettings(); updateVolumes();
-    if (settings.musicOn && state.running) startMusic(state.bossActive ? 'boss' : 'normal');
-    else stopAllMusic();
-    SFX.click();
-  };
+  // music toggle removed
   $('difficultySelect').onchange = e => { settings.difficulty = e.target.value; saveSettings(); SFX.click(); };
   $('qualitySelect').onchange = e => { settings.quality = e.target.value; saveSettings(); initStars(); SFX.click(); };
   // screen shake removed
