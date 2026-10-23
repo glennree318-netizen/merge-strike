@@ -302,7 +302,7 @@
       <div class="settings-row"><label>🎼 Music</label><div class="toggle on" id="musicToggle"></div></div>
       <div class="settings-row"><label>🎯 Difficulty</label><select id="difficultySelect"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option><option value="nightmare">Nightmare</option></select></div>
       <div class="settings-row"><label>✨ Quality</label><select id="qualitySelect"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
-      <div class="settings-row"><label>📳 Screen Shake</label><div class="toggle on" id="shakeToggle"></div></div>
+      <!-- screen shake removed -->
       <div class="menu-buttons"><button id="settingsBackBtn">← BACK</button></div>
     </div>
     <div class="panel hidden" id="howToPanel">
@@ -647,14 +647,15 @@
   updateCrystalDisplays();
 
   // ============ SETTINGS ============
-  const defaultSettings = { masterVol: 100, musicVol: 70, sfxVol: 100, volumeBoost: 200, musicOn: true, difficulty: 'normal', quality: 'medium', shakeOn: true, showFps: false, autoPerf: true, hapticOn: true };
+  const defaultSettings = { masterVol: 100, musicVol: 70, sfxVol: 100, volumeBoost: 200, musicOn: true, difficulty: 'normal', quality: 'medium', shakeOn: false, showFps: false, autoPerf: true, hapticOn: true };
   let settings = { ...defaultSettings };
   try { const s = localStorage.getItem('mergeStrikeSettings'); if (s) settings = { ...defaultSettings, ...JSON.parse(s) }; } catch(e) {}
+  settings.shakeOn = false; saveSettings();
   function saveSettings() { try { localStorage.setItem('mergeStrikeSettings', JSON.stringify(settings)); } catch(e) {} }
   $('masterVol').value = settings.masterVol; $('musicVol').value = settings.musicVol; $('sfxVol').value = settings.sfxVol;
   $('musicToggle').classList.toggle('on', settings.musicOn);
   $('difficultySelect').value = settings.difficulty; $('qualitySelect').value = settings.quality;
-  $('shakeToggle').classList.toggle('on', settings.shakeOn);
+  // screen shake removed
   $('volumeBoost').value = settings.volumeBoost || 200;
   $('boostValue').textContent = (settings.volumeBoost || 200) + '%';
 
@@ -1891,7 +1892,7 @@ if (wasRecord && state.wave > 1) { newRecordBanner.classList.add('show'); SFX.ne
   };
   $('difficultySelect').onchange = e => { settings.difficulty = e.target.value; saveSettings(); SFX.click(); };
   $('qualitySelect').onchange = e => { settings.quality = e.target.value; saveSettings(); initStars(); SFX.click(); };
-  $('shakeToggle').onclick = e => { settings.shakeOn = !settings.shakeOn; e.currentTarget.classList.toggle('on', settings.shakeOn); saveSettings(); SFX.click(); };
+  // screen shake removed
 
   document.addEventListener('gesturestart', e => e.preventDefault());
   document.addEventListener('gesturechange', e => e.preventDefault());
